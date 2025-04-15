@@ -1,4 +1,4 @@
-name: 🚀 CI/CD: Build, Push, Deploy
+name: CI/CD Build & Deploy to EC2
 
 on:
   push:
@@ -6,32 +6,32 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout Code
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: 🧰 Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: 🔧 Install Dependencies
+      - name: Install dependencies
         run: npm install
 
-      - name: 🐳 Docker Login
+      - name: Log in to DockerHub
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      - name: 📦 Build Docker Image
+      - name: Build Docker Image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/node-app:latest .
 
-      - name: 🚀 Push Docker Image
+      - name: Push Docker Image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/node-app:latest
 
-      - name: 🔐 Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -40,4 +40,4 @@ jobs:
             docker pull ${{ secrets.DOCKER_USERNAME }}/node-app:latest
             docker stop node-app || true
             docker rm node-app || true
-            docker run -d -p 3000:3000 --name node-app ${{ secrets.DOCKER_USERNAME }}/node-app:latest
+            docker run -d -p 80:3000 --name node-app ${{ secrets.DOCKER_USERNAME }}/node-app:latest
