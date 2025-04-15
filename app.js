@@ -7,5 +7,5 @@ app.get("/", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`I can see you at---hi ali ---${PORT}`);
+  console.log(`I can see you ate ${PORT}`);
 });
