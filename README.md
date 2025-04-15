@@ -1,92 +1,94 @@
-# 🐳 Node.js Docker App – Production Deployment on AWS EC2
+# 🚀 Dockerized Node.js App with CI/CD Deployment on AWS EC2
 
-This project demonstrates how to containerize a Node.js application using Docker, optimize it using a multi-stage build, and deploy it to AWS EC2. It is also pushed to DockerHub as a production-ready image.
-
----
-
-## 📦 Features
-
-- ✅ Node.js (v18)
-- ✅ Dockerized with Multi-Stage Build
-- ✅ Lightweight, production-ready image using `node:18-slim`
-- ✅ Environment exposed via port `3000`
-- ✅ Deployed on AWS EC2
-- ✅ Image hosted on DockerHub
+Welcome to my DevOps journey! This project demonstrates how to build a simple Node.js app, containerize it using Docker, and deploy it automatically to an AWS EC2 instance using GitHub Actions for CI/CD.
 
 ---
 
-## 🧱 Technologies Used
+## 📁 Project Structure
 
-| Tool | Purpose |
-|------|---------|
-| Node.js | Backend JavaScript runtime |
-| Docker | Containerization |
-| DockerHub | Image registry |
-| EC2 | Cloud hosting on AWS |
-| GitHub | Version control |
 
 ---
 
-## 🛠️ How to Run Locally
+## 🛠️ Tech Stack
 
-```bash
-# Clone the repository
-git clone https://github.com/<your-github>/node-docker-ec2.git
-cd node-docker-ec2
+- **Node.js** (v18)
+- **Express.js** (basic web server)
+- **Docker** (multi-stage build to optimize image size)
+- **GitHub Actions** (CI/CD automation)
+- **AWS EC2** (host for containerized app)
+- **Docker Hub** (Docker image registry)
 
-# Build the Docker image
-docker build -t ali-docker-app .
+---
 
-# Run the container
-docker run -p 3000:3000 ali-docker-app
+## 📦 Docker Workflow
 
+### ✅ Multi-Stage Dockerfile
 
-DockerHub Image
-
-📦 Available on DockerHub:
-👉 murtaza007/node-demo
-
-# Pull the image
-docker pull ali-devops/node-app:latest
-
-# Run it
-docker run -p 3000:3000 ali-devops/node-app
-
-🏗️ Dockerfile Overview
-
-FROM node:18 as builder
-WORKDIR /app
+```Dockerfile
+# Stage 1: Build
+FROM node:18 AS builder
+WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install
 COPY . .
 
+# Stage 2: Production
 FROM node:18-slim
 WORKDIR /app
-COPY --from=builder /app .
+COPY --from=builder /usr/src/app .
 RUN npm prune --production
 EXPOSE 3000
 CMD ["node", "app.js"]
+CI/CD Pipeline: GitHub Actions
 
-Multi-stage Dockerfile ensures small image size and faster deployment 🚀
+Trigger
+The workflow is triggered every time you push code to the main branch.
 
-☁️ Deployment on EC2
+Pipeline Tasks:
+Checkout code
+Set up Node.js
+Install dependencies
+Login to Docker Hub using GitHub secrets
+Build Docker image
+Push image to Docker Hub
+SSH into EC2 and run container
+Secrets Used:
+DOCKER_USERNAME
+DOCKER_PASSWORD
+EC2_HOST
+EC2_USERNAME
+EC2_SSH_KEY (private key in base64 format)
 
-Launched EC2 instance (Ubuntu)
-Installed Docker and pulled the image
-Ran the container exposing port 3000
-Configured EC2 Security Group to allow HTTP access
-Accessed the app via http://<EC2-PUBLIC-IP>:3000
+Sample Workflow Snippet
 
-📈 Project Goals
+- name: Log in to DockerHub
+  run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-Learn Docker multi-stage builds ✅
-Push production images to DockerHub ✅
-Deploy Node.js app on AWS EC2 ✅
-Document the process like a DevOps engineer ✅
+- name: Build Docker Image
+  run: docker build -t ${{ secrets.DOCKER_USERNAME }}/node-app:latest .
 
-🤝 Author
+- name: Push Docker Image
+  run: docker push ${{ secrets.DOCKER_USERNAME }}/node-app:latest
 
-Ali Murtaza – www.linkedin.com/in/ali-murtaza-35a17a230
+- name: Deploy to EC2 via SSH
+  uses: appleboy/ssh-action@v1.0.0
+  with:
+    host: ${{ secrets.EC2_HOST }}
+    username: ${{ secrets.EC2_USERNAME }}
+    key: ${{ secrets.EC2_SSH_KEY }}
+    script: |
+      docker pull ${{ secrets.DOCKER_USERNAME }}/node-app:latest
+      docker stop node-app || true
+      docker rm node-app || true
+      docker run -d -p 80:3000 --name node-app ${{ secrets.DOCKER_USERNAME }}/node-app:latest
 
-📌 License
-This project is open-sourced under the MIT license.
+App Preview
+
+Once deployed, the app will be accessible on your EC2's public IP or DNS. It serves a styled HTML page with a personalized message.
+
+Shout-out
+
+Special thanks to the DevOps community and to myself for being consistent and curious. 🚀
+
+Author
+Ali – DevOps Engineer | Building culture, containers & confidence.
